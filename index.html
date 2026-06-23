@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>ArtVault - Explorateur de Fichiers Artistique</title>
+
+    <!-- PWA Manifest & Theme Colors -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="icons/icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Custom Neumorphic Styles -->
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Fast Inline Script to Prevent Theme Flash -->
+    <script>
+      (function () {
+        let savedTheme = localStorage.getItem("theme");
+        if (!savedTheme) {
+          savedTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        if (savedTheme === "dark") {
+          document.documentElement.classList.add("dark");
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+  </head>
+  <body
+    class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300"
+  >
+    <!-- =========================================================================
+       TOP HEADER
+       ========================================================================= -->
+    <header
+      class="sticky top-0 z-30 w-full px-6 py-4 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-850/50 flex justify-between items-center transition-colors duration-300"
+    >
+      <div
+        class="flex items-center gap-3 cursor-pointer"
+        onclick="window.ArtVaultApp.navigateTo('home')"
+      >
+        <!-- Logo SVG -->
+        <div
+          class="w-10 h-10 rounded-xl bg-indigo-600 dark:bg-sky-500 shadow-out-sm flex items-center justify-center text-white shrink-0"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+        </div>
+        <div>
+          <h1
+            class="text-xl font-black tracking-tight bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent"
+          >
+            ArtVault
+          </h1>
+          <p
+            class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-none"
+          >
+            Studio
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="flex items-center gap-3">
+        <!-- Install PWA Button (Hidden by default, shown via JS) -->
+        <button
+          id="pwa-install-btn"
+          class="hidden btn-neumorphic py-2 px-3 text-xs text-indigo-600 dark:text-sky-400 gap-1.5 hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4.5 w-4.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          <span class="hidden sm:inline">Installer</span>
+        </button>
+
+        <!-- Theme Switcher -->
+        <button
+          id="theme-toggle-btn"
+          class="btn-neumorphic w-10 h-10 hover:scale-[1.05]"
+          onclick="window.ArtVaultApp.toggleTheme()"
+          aria-label="Changer de thème"
+        >
+          <span id="theme-toggle-icon">
+            <!-- Moon Icon (Light Mode) or Sun Icon (Dark Mode) -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-slate-700 dark:text-sky-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <!-- =========================================================================
+       FLOATING MOVE BANNER (When moving folders/images)
+       ========================================================================= -->
+    <div
+      id="move-banner"
+      class="hidden sticky top-[73px] z-20 w-full px-6 py-3 bg-indigo-50 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/50 justify-between items-center animate-slide-in"
+    >
+      <div
+        class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 animate-pulse shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+          />
+        </svg>
+        <span id="move-banner-text">Déplacement de l'élément...</span>
+      </div>
+      <div class="flex gap-2">
+        <button
+          onclick="window.ArtVaultApp.cancelMove()"
+          class="py-1.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs hover:bg-slate-300 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          id="move-paste-btn"
+          onclick="window.ArtVaultApp.executeMove()"
+          class="py-1.5 px-3 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 shadow-sm transition-all hover:scale-[1.02]"
+        >
+          Placer ici
+        </button>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+       MAIN CONTAINERS
+       ========================================================================= -->
+    <main class="max-w-7xl mx-auto px-6 py-6 pb-24">
+      <!-- =========================================================================
+         SECTION 1 : ACCUEIL (PROJECTS LIST)
+         ========================================================================= -->
+      <section id="section-home" class="hidden">
+        <!-- Search and Header -->
+        <div
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+        >
+          <div>
+            <h2
+              class="text-2xl font-extrabold text-slate-800 dark:text-slate-100"
+            >
+              Mes Bibliothèques
+            </h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              Explorez et organisez vos projets de références visuelles
+            </p>
+          </div>
+          <!-- Search bar -->
+          <div class="relative w-full md:w-80">
+            <span
+              class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </span>
+            <input
+              type="text"
+              id="search-input"
+              class="input-neumorphic w-full py-2.5 pl-11 pr-4 text-sm font-medium"
+              placeholder="Rechercher projets, dossiers..."
+            />
+          </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div
+          id="projects-container"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        >
+          <!-- Will be filled by js/projects.js -->
+        </div>
+      </section>
+
+      <!-- =========================================================================
+         SECTION 2 : EXPLORATEUR DE DOSSIERS (WINDOWS EXPLORER)
+         ========================================================================= -->
+      <section id="section-explorer" class="hidden">
+        <!-- Back, Breadcrumbs and View toggles -->
+        <div class="flex flex-col gap-4 mb-6">
+          <!-- Top bar with Back and Breadcrumb -->
+          <div class="flex items-center gap-3">
+            <button
+              onclick="window.ArtVaultApp.goBack()"
+              class="btn-neumorphic w-10 h-10 shrink-0 hover:scale-[1.05]"
+              title="Retour"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+            </button>
+            <!-- Scrollable Breadcrumb Container -->
+            <div
+              class="breadcrumb-container flex-grow py-1.5 px-4 rounded-xl shadow-in-sm bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200/20 dark:border-slate-800/30 overflow-hidden"
+            >
+              <ul
+                id="explorer-breadcrumb"
+                class="flex items-center text-xs sm:text-sm font-medium tracking-tight"
+              >
+                <!-- Rendered by js/folders.js -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Action Button Bar -->
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-200/30 dark:border-slate-800/30"
+          >
+            <div class="flex items-center gap-2.5">
+              <!-- Create Folder -->
+              <button
+                onclick="window.ArtVaultApp.openNewFolderModal()"
+                class="btn-neumorphic py-2.5 px-4 text-xs font-bold text-slate-700 dark:text-slate-300 gap-1.5 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4.5 w-4.5 text-amber-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4zm4 6a1 1 0 100-2H6a1 1 0 000 2h2zm4 0a1 1 0 100-2h-2a1 1 0 000 2h2z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                Nouveau Dossier
+              </button>
+              <!-- Import Images -->
+              <button
+                onclick="window.ArtVaultApp.triggerImageUpload()"
+                class="btn-neumorphic py-2.5 px-4 text-xs font-bold text-indigo-600 dark:text-sky-400 gap-1.5 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4.5 w-4.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                Importer Images
+              </button>
+            </div>
+
+            <!-- View Switch Grid/Pinterest -->
+            <div
+              class="flex items-center gap-2 rounded-xl shadow-in-sm p-1 bg-slate-100/30 dark:bg-slate-900/10"
+            >
+              <button
+                id="view-btn-grid"
+                onclick="window.ArtVaultApp.toggleViewMode()"
+                class="btn-neumorphic w-9 h-9 !rounded-lg hover:scale-[1.05] shadow-in-sm text-indigo-600 dark:text-sky-400"
+                title="Grille classique"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4.5 w-4.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
+                </svg>
+              </button>
+              <button
+                id="view-btn-pinterest"
+                onclick="window.ArtVaultApp.toggleViewMode()"
+                class="btn-neumorphic w-9 h-9 !rounded-lg hover:scale-[1.05]"
+                title="Vue Pinterest/Masonry"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4.5 w-4.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 11a1 1 0 011-1h4a1 1 0 011 1v8a1 1 0 01-1 1h-4a1 1 0 01-1-1v-8z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Folders Grid (Extruded container) -->
+        <div
+          id="explorer-folders-container"
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6"
+        >
+          <!-- Rendered by js/folders.js -->
+        </div>
+
+        <!-- Images Gallery (Pinterest or Classic Grid) -->
+        <div id="explorer-images-container" class="w-full">
+          <!-- Rendered by js/gallery.js -->
+        </div>
+
+        <!-- Empty State -->
+        <div
+          id="explorer-empty-state"
+          class="hidden py-16 text-center text-slate-400 dark:text-slate-500"
+        >
+          <div
+            class="w-20 h-20 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 shadow-inner mx-auto mb-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-10 w-10 text-indigo-600 dark:text-sky-400 opacity-65"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <p class="font-bold text-base text-slate-600 dark:text-slate-400">
+            Ce dossier est vide
+          </p>
+          <p
+            class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 max-w-sm mx-auto px-4"
+          >
+            Glissez-déposez des images ou cliquez sur "Importer Images" pour
+            commencer à organiser vos références dans ce dossier.
+          </p>
+        </div>
+
+        <!-- Drag & Drop Zone Overlay -->
+        <div
+          id="drop-zone-overlay"
+          class="hidden fixed inset-0 z-50 bg-indigo-600/10 dark:bg-sky-500/10 border-4 border-dashed border-indigo-600 dark:border-sky-400 backdrop-blur-sm justify-center items-center pointer-events-none transition-all duration-300"
+        >
+          <div
+            class="card card-neumorphic p-8 text-center max-w-md pointer-events-auto"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-16 w-16 mx-auto text-indigo-600 dark:text-sky-400 animate-bounce mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <h3 class="text-lg font-black text-slate-800 dark:text-slate-100">
+              Déposez vos images ici
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              Relâchez les fichiers pour les importer instantanément dans ce
+              dossier
+            </p>
+          </div>
+        </div>
+
+        <!-- Hidden Input for Image Upload -->
+        <input
+          type="file"
+          id="hidden-file-input"
+          class="hidden"
+          multiple
+          accept="image/*"
+        />
+      </section>
+
+      <!-- =========================================================================
+         SECTION 3 : TABLEAU DE BORD (DASHBOARD)
+         ========================================================================= -->
+      <section id="section-dashboard" class="hidden">
+        <div class="mb-8">
+          <h2
+            class="text-2xl font-extrabold text-slate-800 dark:text-slate-100"
+          >
+            Tableau de Bord
+          </h2>
+          <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            Statistiques générales de votre coffre-fort artistique
+          </p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <!-- Projects count -->
+          <div class="card card-neumorphic p-6 flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-2xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-sky-400 shadow-inner"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-7 w-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+            </div>
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              >
+                Projets Actifs
+              </p>
+              <h3
+                id="stats-projects-count"
+                class="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5"
+              >
+                0
+              </h3>
+            </div>
+          </div>
+
+          <!-- Folders count -->
+          <div class="card card-neumorphic p-6 flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-50 dark:bg-amber-950/20 text-amber-500 dark:text-amber-400 shadow-inner"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-7 w-7"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M19.5 21a3 3 0 003-3v-7.5a3 3 0 00-3-3h-6.879l-2.707-2.707A1.498 1.498 0 008.879 4.5H4.5A3 3 0 001.5 7.5v10.5a3 3 0 003 3h15z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              >
+                Dossiers
+              </p>
+              <h3
+                id="stats-folders-count"
+                class="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5"
+              >
+                0
+              </h3>
+            </div>
+          </div>
+
+          <!-- Images count -->
+          <div class="card card-neumorphic p-6 flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500 dark:text-emerald-400 shadow-inner"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-7 w-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              >
+                Images Stockées
+              </p>
+              <h3
+                id="stats-images-count"
+                class="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5"
+              >
+                0
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Access Widgets -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Last opened project -->
+          <div
+            class="card card-neumorphic p-6 flex flex-col justify-between min-h-[160px]"
+          >
+            <div>
+              <h4
+                class="font-bold text-base text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-indigo-600 dark:text-sky-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Dernier Projet Ouvert
+              </h4>
+              <div id="dashboard-last-project">
+                <!-- Rendered by js/app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Last image added -->
+          <div
+            class="card card-neumorphic p-6 flex flex-col justify-between min-h-[160px]"
+          >
+            <div>
+              <h4
+                class="font-bold text-base text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-emerald-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Dernière Image Ajoutée
+              </h4>
+              <div id="dashboard-last-image">
+                <!-- Rendered by js/app.js -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+         SECTION 4 : CORBEILLE (TRASH)
+         ========================================================================= -->
+      <section id="section-trash" class="hidden">
+        <!-- Header and Action -->
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
+        >
+          <div>
+            <h2
+              class="text-2xl font-extrabold text-slate-800 dark:text-slate-100"
+            >
+              Corbeille
+            </h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              Restaurez vos éléments ou supprimez-les définitivement
+            </p>
+          </div>
+          <!-- Empty Trash Button -->
+          <button
+            id="empty-trash-btn"
+            onclick="window.ArtVaultApp.emptyTrash()"
+            class="btn-neumorphic py-2.5 px-4 text-xs font-bold text-red-500 gap-1.5 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4.5 w-4.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Vider la Corbeille
+          </button>
+        </div>
+
+        <!-- Trash Items Grid -->
+        <div
+          id="trash-container"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        >
+          <!-- Rendered by js/app.js -->
+        </div>
+      </section>
+
+      <!-- =========================================================================
+         SECTION 5 : SAUVEGARDE & PARAMETRES (BACKUP)
+         ========================================================================= -->
+      <section id="section-backup" class="hidden">
+        <div class="mb-8">
+          <h2
+            class="text-2xl font-extrabold text-slate-800 dark:text-slate-100"
+          >
+            Sauvegarde & Paramètres
+          </h2>
+          <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            Sauvegardez l'intégralité de vos projets et références localement
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Export Card -->
+          <div
+            class="card card-neumorphic p-6 flex flex-col justify-between min-h-[220px]"
+          >
+            <div>
+              <div
+                class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-sky-400 shadow-inner flex items-center justify-center mb-4"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </div>
+              <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">
+                Exporter la bibliothèque
+              </h3>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                Téléchargez un fichier JSON unique contenant tous vos projets,
+                dossiers et images (données encodées incluses). Conservez-le
+                précieusement comme sauvegarde.
+              </p>
+            </div>
+            <button
+              onclick="window.ArtVaultApp.exportBackup()"
+              class="btn-neumorphic w-full py-3 mt-6 text-sm font-bold text-indigo-600 dark:text-sky-400 hover:scale-[1.01] active:scale-[0.99]"
+            >
+              Télécharger la Sauvegarde (.json)
+            </button>
+          </div>
+
+          <!-- Import Card -->
+          <div
+            class="card card-neumorphic p-6 flex flex-col justify-between min-h-[220px]"
+          >
+            <div>
+              <div
+                class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-950/20 text-sky-500 dark:text-sky-400 shadow-inner flex items-center justify-center mb-4"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+              </div>
+              <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">
+                Restaurer une sauvegarde
+              </h3>
+              <p
+                class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 text-amber-600 dark:text-amber-500 font-medium"
+              >
+                ATTENTION : L'importation d'une sauvegarde écrasera
+                définitivement toutes les données actuellement stockées dans
+                votre application.
+              </p>
+            </div>
+            <button
+              onclick="window.ArtVaultApp.triggerImportBackup()"
+              class="btn-neumorphic w-full py-3 mt-6 text-sm font-bold text-sky-500 hover:scale-[1.01] active:scale-[0.99]"
+            >
+              Sélectionner un fichier de sauvegarde
+            </button>
+            <input
+              type="file"
+              id="import-file-picker"
+              class="hidden"
+              accept=".json"
+            />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- =========================================================================
+       BOTTOM NAVIGATION BAR
+       ========================================================================= -->
+    <nav class="bottom-nav">
+      <!-- Home Tab -->
+      <button
+        id="nav-btn-home"
+        onclick="window.ArtVaultApp.navigateTo('home')"
+        class="flex flex-col items-center justify-center w-16 h-full relative transition-colors focus:outline-none"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5.5 w-5.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2.2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+          />
+        </svg>
+        <span class="text-[9px] font-bold mt-1">Accueil</span>
+        <span
+          class="nav-dot opacity-0 absolute bottom-1.5 w-1 h-1 rounded-full bg-indigo-600 dark:bg-sky-400 transition-opacity"
+        ></span>
+      </button>
+
+      <!-- Stats/Dashboard Tab -->
+      <button
+        id="nav-btn-dashboard"
+        onclick="window.ArtVaultApp.navigateTo('dashboard')"
+        class="flex flex-col items-center justify-center w-16 h-full relative transition-colors focus:outline-none"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5.5 w-5.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2.2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+        <span class="text-[9px] font-bold mt-1">Stats</span>
+        <span
+          class="nav-dot opacity-0 absolute bottom-1.5 w-1 h-1 rounded-full bg-indigo-600 dark:bg-sky-400 transition-opacity"
+        ></span>
+      </button>
+
+      <!-- Trash Tab -->
+      <button
+        id="nav-btn-trash"
+        onclick="window.ArtVaultApp.navigateTo('trash')"
+        class="flex flex-col items-center justify-center w-16 h-full relative transition-colors focus:outline-none"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5.5 w-5.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2.2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+        </svg>
+        <span class="text-[9px] font-bold mt-1">Corbeille</span>
+        <span
+          class="nav-dot opacity-0 absolute bottom-1.5 w-1 h-1 rounded-full bg-indigo-600 dark:bg-sky-400 transition-opacity"
+        ></span>
+      </button>
+
+      <!-- Backup/Settings Tab -->
+      <button
+        id="nav-btn-backup"
+        onclick="window.ArtVaultApp.navigateTo('backup')"
+        class="flex flex-col items-center justify-center w-16 h-full relative transition-colors focus:outline-none"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5.5 w-5.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2.2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+        <span class="text-[9px] font-bold mt-1">Sauvegarde</span>
+        <span
+          class="nav-dot opacity-0 absolute bottom-1.5 w-1 h-1 rounded-full bg-indigo-600 dark:bg-sky-400 transition-opacity"
+        ></span>
+      </button>
+    </nav>
+
+    <!-- =========================================================================
+       MODALS & DIALOGS
+       ========================================================================= -->
+
+    <!-- 1. NEW PROJECT MODAL -->
+    <div
+      id="new-project-modal"
+      class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm justify-center items-center p-4"
+    >
+      <div class="modal-content w-full max-w-lg p-6 animate-zoom-in">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-black text-slate-800 dark:text-slate-100">
+            Nouveau Projet Artistique
+          </h3>
+          <button
+            onclick="window.ArtVaultApp.closeNewProjectModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form id="new-project-form" class="space-y-4">
+          <!-- Name -->
+          <div>
+            <label
+              for="proj-name"
+              class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5"
+              >Nom du Projet *</label
+            >
+            <input
+              type="text"
+              id="proj-name"
+              required
+              class="input-neumorphic w-full py-2.5 px-4 text-sm font-medium"
+              placeholder="Ex: Le Gardien des Émotions"
+            />
+          </div>
+
+          <!-- Type -->
+          <div>
+            <label
+              for="proj-type"
+              class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5"
+              >Type de Projet</label
+            >
+            <select
+              id="proj-type"
+              class="input-neumorphic w-full py-2.5 px-4 text-sm font-medium"
+            >
+              <option value="Bande dessinée">
+                Bande dessinée (Création de sous-dossiers auto)
+              </option>
+              <option value="Manga">Manga</option>
+              <option value="Illustration">Illustration</option>
+              <option value="Character Design">
+                Character Design (Création de sous-dossiers auto)
+              </option>
+              <option value="Concept Art">Concept Art</option>
+              <option value="Environnement">
+                Environnement (Création de sous-dossiers auto)
+              </option>
+              <option value="Galerie personnelle">Galerie personnelle</option>
+              <option value="Dessin traditionnel">Dessin traditionnel</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label
+              for="proj-desc"
+              class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5"
+              >Description (Optionnel)</label
+            >
+            <textarea
+              id="proj-desc"
+              rows="3"
+              class="input-neumorphic w-full py-2.5 px-4 text-sm font-medium"
+              placeholder="Brève description de votre projet ou série artistique..."
+            ></textarea>
+          </div>
+
+          <!-- Cover Image -->
+          <div>
+            <label
+              for="proj-cover"
+              class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5"
+              >Image de Couverture (Laissez vide pour un motif généré)</label
+            >
+            <input
+              type="file"
+              id="proj-cover"
+              accept="image/*"
+              class="input-neumorphic w-full py-2 px-3 text-xs font-medium file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-slate-800 dark:file:text-sky-400"
+            />
+          </div>
+
+          <div
+            class="flex justify-end gap-3 pt-4 border-t border-slate-200/50 dark:border-slate-800/50"
+          >
+            <button
+              type="button"
+              onclick="window.ArtVaultApp.closeNewProjectModal()"
+              class="btn-neumorphic py-2.5 px-4 text-xs font-bold text-slate-500"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="py-2.5 px-6 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Créer Projet
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. NEW FOLDER MODAL -->
+    <div
+      id="new-folder-modal"
+      class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm justify-center items-center p-4"
+    >
+      <div class="modal-content w-full max-w-sm p-6 animate-zoom-in">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-base font-black text-slate-800 dark:text-slate-100">
+            Nouveau Dossier
+          </h3>
+          <button
+            onclick="window.ArtVaultApp.closeNewFolderModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form id="new-folder-form" class="space-y-4">
+          <div>
+            <label
+              for="folder-name"
+              class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5"
+              >Nom du Dossier *</label
+            >
+            <input
+              type="text"
+              id="folder-name"
+              required
+              class="input-neumorphic w-full py-2.5 px-4 text-sm font-medium"
+              placeholder="Ex: Personnages, Décors..."
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onclick="window.ArtVaultApp.closeNewFolderModal()"
+              class="btn-neumorphic py-2 px-3 text-xs font-bold text-slate-500"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="py-2 px-5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md hover:bg-indigo-700 transition-all hover:scale-[1.02]"
+            >
+              Créer Dossier
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3. RENAME MODAL -->
+    <div
+      id="rename-modal"
+      class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm justify-center items-center p-4"
+    >
+      <div class="modal-content w-full max-w-sm p-6 animate-zoom-in">
+        <div class="flex justify-between items-center mb-6">
+          <h3
+            id="rename-title"
+            class="text-base font-black text-slate-800 dark:text-slate-100"
+          >
+            Renommer
+          </h3>
+          <button
+            onclick="window.ArtVaultApp.closeRenameModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form id="rename-form" class="space-y-4">
+          <div>
+            <label
+              for="rename-input"
+              class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5"
+              >Nouveau Nom *</label
+            >
+            <input
+              type="text"
+              id="rename-input"
+              required
+              class="input-neumorphic w-full py-2.5 px-4 text-sm font-medium"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onclick="window.ArtVaultApp.closeRenameModal()"
+              class="btn-neumorphic py-2 px-3 text-xs font-bold text-slate-500"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="py-2 px-5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md hover:bg-indigo-700 transition-all hover:scale-[1.02]"
+            >
+              Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. CONTEXT DRAWER / DIALOG (Mobile Bottom-Drawer, Desktop Popover) -->
+    <div
+      id="context-drawer"
+      class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs justify-center items-end sm:items-center p-0 sm:p-4"
+      onclick="window.ArtVaultApp.closeContextMenu()"
+    >
+      <div
+        class="modal-content w-full sm:max-w-xs p-6 rounded-t-2xl sm:rounded-2xl animate-slide-up sm:animate-zoom-in"
+        onclick="event.stopPropagation()"
+      >
+        <div
+          class="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800/50"
+        >
+          <h4
+            id="context-title"
+            class="font-extrabold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate max-w-[85%]"
+          >
+            Options
+          </h4>
+          <button
+            onclick="window.ArtVaultApp.closeContextMenu()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-2.5">
+          <!-- Rename -->
+          <button
+            onclick="window.ArtVaultApp.triggerRename()"
+            class="w-full py-3 px-4 text-sm font-bold text-left text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-2.5"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4.5 w-4.5 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+            Renommer
+          </button>
+
+          <!-- Move -->
+          <button
+            onclick="window.ArtVaultApp.triggerMove()"
+            class="w-full py-3 px-4 text-sm font-bold text-left text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-2.5"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4.5 w-4.5 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+            Déplacer
+          </button>
+
+          <!-- Delete (Send to Trash) -->
+          <button
+            onclick="window.ArtVaultApp.triggerDelete()"
+            class="w-full py-3 px-4 text-sm font-bold text-left text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex items-center gap-2.5"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4.5 w-4.5 text-red-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Envoyer à la Corbeille
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. FULLSCREEN LIGHTBOX -->
+    <div
+      id="lightbox"
+      class="hidden fixed inset-0 z-50 bg-black/98 flex-col justify-between select-none animate-fade-in"
+      onmousemove="window.ArtVaultGallery.drag(event)"
+      onmouseup="window.ArtVaultGallery.endDrag()"
+      ontouchmove="window.ArtVaultGallery.drag(event)"
+      ontouchend="window.ArtVaultGallery.endDrag()"
+    >
+      <!-- Lightbox Header -->
+      <div
+        class="w-full px-6 py-4 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-center z-10 shrink-0"
+      >
+        <div class="overflow-hidden pr-8 text-white">
+          <h3
+            id="lightbox-name"
+            class="font-bold text-sm sm:text-base truncate"
+          >
+            Nom de l'image
+          </h3>
+          <p
+            id="lightbox-info"
+            class="text-[10px] sm:text-xs text-slate-400 mt-0.5"
+          >
+            Taille • Date
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Zoom Out -->
+          <button
+            onclick="window.ArtVaultGallery.zoomOut()"
+            class="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+            title="Zoom Arrière"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5.5 w-5.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"
+              />
+            </svg>
+          </button>
+          <!-- Zoom In -->
+          <button
+            onclick="window.ArtVaultGallery.zoomIn()"
+            class="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+            title="Zoom Avant"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5.5 w-5.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"
+              />
+            </svg>
+          </button>
+          <!-- Reset Zoom -->
+          <button
+            onclick="window.ArtVaultGallery.resetZoom()"
+            class="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+            title="Réinitialiser le zoom"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5.5 w-5.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18"
+              />
+            </svg>
+          </button>
+          <!-- Close -->
+          <button
+            onclick="window.ArtVaultGallery.closeLightbox()"
+            class="p-2 rounded-full hover:bg-white/10 text-white transition-colors ml-2"
+            title="Fermer (Échap)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Lightbox Main Image Area -->
+      <div
+        class="flex-grow flex items-center justify-center relative overflow-hidden w-full h-full"
+      >
+        <!-- Previous Arrow -->
+        <button
+          onclick="window.ArtVaultGallery.prevImage()"
+          class="absolute left-4 z-10 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white border border-white/10 transition-colors"
+          title="Précédent (Flèche gauche)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="3"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+
+        <!-- Main Image -->
+        <img
+          id="lightbox-img"
+          src=""
+          alt=""
+          class="object-contain select-none"
+          onmousedown="window.ArtVaultGallery.startDrag(event)"
+          ontouchstart="window.ArtVaultGallery.startDrag(event)"
+        />
+
+        <!-- Next Arrow -->
+        <button
+          onclick="window.ArtVaultGallery.nextImage()"
+          class="absolute right-4 z-10 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white border border-white/10 transition-colors"
+          title="Suivant (Flèche droite)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="3"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Lightbox Footer -->
+      <div
+        class="w-full py-4 text-center text-slate-500 text-xs z-10 shrink-0 bg-gradient-to-t from-black/60 to-transparent"
+      >
+        Glissez pour déplacer l'image zoomée • Utilisez les flèches du clavier
+        pour naviguer
+      </div>
+    </div>
+
+    <!-- 6. LOADING OVERLAY -->
+    <div
+      id="loading-overlay"
+      class="hidden fixed inset-0 z-[60] bg-slate-900/45 dark:bg-black/60 backdrop-blur-xs justify-center items-center flex-col gap-4"
+    >
+      <div
+        class="card card-neumorphic p-8 flex flex-col items-center justify-center"
+      >
+        <!-- Loading Spinner -->
+        <div class="relative w-14 h-14">
+          <div
+            class="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800"
+          ></div>
+          <div
+            class="absolute inset-0 rounded-full border-4 border-t-indigo-600 dark:border-t-sky-400 animate-spin"
+          ></div>
+        </div>
+        <p
+          id="loading-text"
+          class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-4 tracking-wide"
+        >
+          Traitement en cours...
+        </p>
+      </div>
+    </div>
+
+    <!-- 7. FLOATING TOAST NOTIFICATION -->
+    <div
+      id="toast"
+      class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[50] px-5 py-3 rounded-2xl bg-slate-900/90 dark:bg-slate-950/95 text-white shadow-lg backdrop-blur-md flex items-center gap-2 text-xs sm:text-sm font-bold border border-white/10 transition-all duration-300 translate-y-20 opacity-0"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-4.5 w-4.5 text-emerald-400 shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <span id="toast-text">Action effectuée avec succès !</span>
+    </div>
+
+    <!-- =========================================================================
+       APPLICATION SCRIPTS
+       ========================================================================= -->
+    <!-- Correct ordering without type="module" to bypass CORS local file loading errors -->
+    <script src="js/database.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/folders.js"></script>
+    <script src="js/gallery.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- PWA Install Prompt Handler -->
+    <script>
+      let deferredPrompt;
+      const installBtn = document.getElementById("pwa-install-btn");
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI to show the install button
+        if (installBtn) installBtn.classList.remove("hidden");
+      });
+
+      if (installBtn) {
+        installBtn.addEventListener("click", async () => {
+          if (!deferredPrompt) return;
+          // Show the prompt
+          deferredPrompt.prompt();
+          // Wait for the user to respond to the prompt
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`PWA installation choice: ${outcome}`);
+          // We've used the prompt, and can't use it again, clear it
+          deferredPrompt = null;
+          // Hide the button
+          installBtn.classList.add("hidden");
+        });
+      }
+
+      window.addEventListener("appinstalled", (evt) => {
+        console.log("ArtVault has been installed successfully!");
+        if (installBtn) installBtn.classList.add("hidden");
+      });
+    </script>
+  </body>
+</html>

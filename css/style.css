@@ -1,0 +1,289 @@
+/* css/style.css */
+/* ArtVault - Neumorphic Style Sheet & Layouts */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+:root {
+  /* Light Mode Colors */
+  --bg-color: #eef2f7;
+  --bg-soft: #f8fafc;
+  --text-color: #1e293b;
+  --text-muted: #64748b;
+  
+  /* Accent Colors - Elegant Deep Indigo */
+  --accent-color: #4f46e5;
+  --accent-light: #6366f1;
+  --accent-glow: rgba(79, 70, 229, 0.15);
+  
+  /* Neumorphic Shadows Light (Soft and deep) */
+  --shadow-out: 9px 9px 16px #d1d9e6, -9px -9px 16px #ffffff;
+  --shadow-in: inset 6px 6px 10px #d1d9e6, inset -6px -6px 10px #ffffff;
+  --shadow-out-sm: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+  --shadow-in-sm: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff;
+  
+  --border-radius: 20px;
+  --border-radius-sm: 12px;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode Colors - Velvet Night Blue */
+  --bg-color: #0b0f19;
+  --bg-soft: #111827;
+  --text-color: #f8fafc;
+  --text-muted: #94a3b8;
+  
+  /* Accent Colors - Luminous Neon Blue */
+  --accent-color: #0ea5e9;
+  --accent-light: #38bdf8;
+  --accent-glow: rgba(14, 165, 233, 0.2);
+  
+  /* Neumorphic Shadows Dark (Soft and deep in the dark) */
+  --shadow-out: 8px 8px 16px #05070c, -8px -8px 16px #131b2e;
+  --shadow-in: inset 6px 6px 10px #05070c, inset -6px -6px 10px #131b2e;
+  --shadow-out-sm: 4px 4px 8px #05070c, -4px -4px 8px #131b2e;
+  --shadow-in-sm: inset 3px 3px 6px #05070c, inset -3px -3px 6px #131b2e;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  margin: 0;
+  padding-bottom: 70px; /* Space for bottom nav */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 10px;
+  opacity: 0.3;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* Neumorphic Cards */
+.card-neumorphic {
+  background-color: var(--bg-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-out);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border 0.2s ease;
+}
+[data-theme="dark"] .card-neumorphic {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.card-neumorphic-sm {
+  background-color: var(--bg-color);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-out-sm);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+[data-theme="dark"] .card-neumorphic-sm {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Neumorphic Buttons */
+.btn-neumorphic {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-out-sm);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+[data-theme="dark"] .btn-neumorphic {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.btn-neumorphic:hover {
+  transform: translateY(-1px);
+  color: var(--accent-color);
+}
+
+.btn-neumorphic:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-in-sm);
+}
+
+.btn-neumorphic-active {
+  box-shadow: var(--shadow-in-sm) !important;
+  color: var(--accent-color) !important;
+}
+
+/* Neumorphic Inputs */
+.input-neumorphic {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-in-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.input-neumorphic:focus {
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-in-sm), 0 0 8px var(--accent-glow);
+}
+
+/* Shadows Utility */
+.shadow-out {
+  box-shadow: var(--shadow-out);
+}
+.shadow-in {
+  box-shadow: var(--shadow-in);
+}
+.shadow-out-sm {
+  box-shadow: var(--shadow-out-sm);
+}
+.shadow-in-sm {
+  box-shadow: var(--shadow-in-sm);
+}
+
+/* Bottom Nav bar Neumorphic styling */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: rgba(238, 242, 247, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.03);
+  z-index: 40;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+[data-theme="dark"] .bottom-nav {
+  background-color: rgba(11, 15, 25, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================================================
+   PINTEREST / MASONRY GRID LAYOUT
+   ========================================================================= */
+.pinterest-grid {
+  column-count: 2;
+  column-gap: 20px;
+  width: 100%;
+}
+@media (min-width: 640px) {
+  .pinterest-grid {
+    column-count: 3;
+    column-gap: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .pinterest-grid {
+    column-count: 4;
+    column-gap: 24px;
+  }
+}
+@media (min-width: 1280px) {
+  .pinterest-grid {
+    column-count: 5;
+    column-gap: 24px;
+  }
+}
+
+.pinterest-item {
+  break-inside: avoid;
+  margin-bottom: 20px;
+  display: inline-block;
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .pinterest-item {
+    margin-bottom: 24px;
+  }
+}
+
+/* Classic Grid */
+.classic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+@media (min-width: 640px) {
+  .classic-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .classic-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+@media (min-width: 1280px) {
+  .classic-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+/* Lightbox styles */
+#lightbox-img {
+  transition: transform 0.1s ease-out;
+  cursor: grab;
+  max-width: 90vw;
+  max-height: 80vh;
+}
+#lightbox-img:active {
+  cursor: grabbing;
+}
+
+/* Breadcrumb responsive styling */
+.breadcrumb-container {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+.breadcrumb-container::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for breadcrumb */
+}
+
+/* Neumorphic Dialogs / Modals */
+.modal-content {
+  background-color: var(--bg-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-out);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+[data-theme="dark"] .modal-content {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Custom styles for select and options */
+select.input-neumorphic {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
+[data-theme="dark"] select.input-neumorphic {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+}
