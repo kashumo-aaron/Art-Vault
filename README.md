@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎨 ArtVault - Explorateur de Fichiers Artistique (PWA)
 
 **ArtVault** est un explorateur de fichiers artistique conçu spécialement pour stocker, organiser et structurer vos références visuelles et inspirations, sans aucune dépendance à un serveur ou à des frameworks complexes. 
@@ -91,3 +92,7 @@ Le projet est conçu pour fonctionner parfaitement avec GitHub Pages :
 - **Ajouter des dossiers automatiques** : Dans `js/projects.js`, localisez l'objet `autoFolders` et ajoutez une clé correspondant au type de projet avec la liste des noms de dossiers souhaités.
 - **Modifier le style neumorphique** : Ouvrez `css/style.css` et ajustez les variables `--shadow-out` (pour les éléments sortants) ou `--shadow-in` (pour les éléments enfoncés). Les ombres se recalculent automatiquement !
 - **Changer la taille maximale des images** : Dans `js/gallery.js`, modifiez la valeur de `15 * 1024 * 1024` dans la fonction `importImages` pour augmenter ou diminuer la taille acceptée (exprimée en octets).
+=======
+# Art-Vault
+App pour gestion des image
+>>>>>>> b506f8afa99104f37d67f10ff8b04d11cf588e7e
