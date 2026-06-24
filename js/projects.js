@@ -194,6 +194,8 @@ window.ArtVaultProjects = {
       const images = await window.ArtVaultDB.getImagesInProject(project.id);
       const activeImagesCount = images.filter(img => !img.isDeleted).length;
 
+      const safeName = project.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
       const card = document.createElement("div");
       card.className = "card card-neumorphic overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer flex flex-col min-h-[220px]";
       card.onclick = () => window.ArtVaultApp.openProject(project.id);
@@ -201,6 +203,14 @@ window.ArtVaultProjects = {
       card.innerHTML = `
         <div class="relative w-100 aspect-[16/10] overflow-hidden bg-slate-200 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
           <img src="${project.coverImage}" alt="${project.name}" class="w-full h-full object-cover" onerror="this.src='${this.generatePlaceholderCover(project.name)}'">
+          <button
+            onclick="event.stopPropagation(); window.ArtVaultApp.showProjectContextMenu(event, '${project.id}', '${safeName}')"
+            class="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+            title="Options du projet">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01" />
+            </svg>
+          </button>
           <span class="absolute top-3 right-3 px-2 py-1 text-[10px] font-semibold tracking-wider uppercase rounded-full bg-black/40 text-white backdrop-blur-sm">
             ${project.type}
           </span>

@@ -590,6 +590,7 @@ window.ArtVaultApp = {
     this.activeContextItem = { id: folderId, type: "folder", name: folderName };
     
     document.getElementById("context-title").textContent = `Options : ${folderName}`;
+    this.setContextMoveVisible(true);
     
     // Show drawer
     const drawer = document.getElementById("context-drawer");
@@ -604,6 +605,7 @@ window.ArtVaultApp = {
     this.activeContextItem = { id: imageId, type: "image", name: imageName };
     
     document.getElementById("context-title").textContent = `Options : ${imageName}`;
+    this.setContextMoveVisible(true);
     
     // Show drawer
     const drawer = document.getElementById("context-drawer");
@@ -611,6 +613,27 @@ window.ArtVaultApp = {
       drawer.classList.remove("hidden");
       drawer.classList.add("flex");
     }
+  },
+
+  showProjectContextMenu(event, projectId, projectName) {
+    if (event) event.stopPropagation();
+    this.activeContextItem = { id: projectId, type: "project", name: projectName };
+    
+    document.getElementById("context-title").textContent = `Options : ${projectName}`;
+    // Projects cannot be moved, hide the Move option
+    this.setContextMoveVisible(false);
+    
+    // Show drawer
+    const drawer = document.getElementById("context-drawer");
+    if (drawer) {
+      drawer.classList.remove("hidden");
+      drawer.classList.add("flex");
+    }
+  },
+
+  setContextMoveVisible(visible) {
+    const moveBtn = document.getElementById("context-move-btn");
+    if (moveBtn) moveBtn.classList.toggle("hidden", !visible);
   },
 
   closeContextMenu() {
@@ -631,7 +654,8 @@ window.ArtVaultApp = {
       const input = document.getElementById("rename-input");
       input.value = item.name;
       
-      document.getElementById("rename-title").textContent = `Renommer ${item.type === "folder" ? "le dossier" : "l'image"}`;
+      const typeLabels = { folder: "le dossier", image: "l'image", project: "le projet" };
+      document.getElementById("rename-title").textContent = `Renommer ${typeLabels[item.type] || ""}`;
       
       modal.classList.remove("hidden");
       modal.classList.add("flex");
@@ -652,9 +676,17 @@ window.ArtVaultApp = {
     const newName = document.getElementById("rename-input").value;
     if (!item) return;
 
+    if (!newName.trim()) return;
+
     try {
       if (item.type === "folder") {
         await window.ArtVaultFolders.renameFolder(item.id, newName);
+      } else if (item.type === "project") {
+        const proj = await window.ArtVaultDB.getProject(item.id);
+        if (proj) {
+          proj.name = newName.trim();
+          await window.ArtVaultDB.saveProject(proj);
+        }
       } else {
         const img = await window.ArtVaultDB.getImage(item.id);
         if (img) {
@@ -663,9 +695,23 @@ window.ArtVaultApp = {
         }
       }
       this.closeRenameModal();
-      await this.enterExplorer();
+      await this.refreshCurrentView();
+      this.updateDashboardStats();
     } catch (err) {
       alert("Erreur lors du renommage : " + err.message);
+    }
+  },
+
+  // Re-renders whichever view is currently active.
+  async refreshCurrentView() {
+    if (this.state.currentView === "explorer") {
+      await this.enterExplorer();
+    } else if (this.state.currentView === "home") {
+      await window.ArtVaultProjects.renderProjectsList(this.state.searchQuery);
+    } else if (this.state.currentView === "trash") {
+      await this.renderTrash();
+    } else if (this.state.currentView === "dashboard") {
+      await this.renderDashboard();
     }
   },
 
@@ -760,10 +806,14 @@ window.ArtVaultApp = {
       try {
         if (item.type === "folder") {
           await window.ArtVaultFolders.trashFolder(item.id);
+          await this.enterExplorer();
+        } else if (item.type === "project") {
+          await window.ArtVaultDB.setProjectDeleteStatus(item.id, true);
+          await this.navigateTo("home");
         } else {
           await window.ArtVaultGallery.trashImage(item.id);
+          await this.enterExplorer();
         }
-        await this.enterExplorer();
         this.updateDashboardStats();
         this.showToast(`"${item.name}" envoyé à la corbeille.`);
       } catch (err) {
